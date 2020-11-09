@@ -25,21 +25,22 @@ class RtpPacket:
 		self.header[0] = self.header[0] | padding << 5
 		self.header[0] = self.header[0] | extension << 4
 		self.header[0] = self.header[0] | cc
+	
 		self.header[1] = marker << 7
 		self.header[1] = self.header[1] | pt
 
 		self.header[2] = seqnum >> 8
-		self.header[3] = seqnum
+		self.header[3] = seqnum & 0xFF
 
 		self.header[4] = (timestamp >> 24) & 0xFF
 		self.header[5] = (timestamp >> 16) & 0xFF
 		self.header[6] = (timestamp >> 8) & 0xFF
 		self.header[7] = timestamp & 0xFF
 
-		self.header[8] = ssrc >> 24
-		self.header[9] = ssrc >> 16
-		self.header[10] = ssrc >> 8
-		self.header[11] = ssrc
+		self.header[8] = (ssrc >> 24) & 0xFF
+		self.header[9] = (ssrc >> 16) & 0xFF
+		self.header[10] = (ssrc >> 8) & 0xFF
+		self.header[11] = ssrc & 0xFF
 		self.payload = payload
 		
 	def decode(self, byteStream):

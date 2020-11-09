@@ -141,7 +141,6 @@ class ServerWorker:
 		ssrc = 0 
 		
 		rtpPacket = RtpPacket()
-		
 		rtpPacket.encode(version, padding, extension, cc, seqnum, marker, pt, ssrc, payload)
 		
 		return rtpPacket.getPacket()
