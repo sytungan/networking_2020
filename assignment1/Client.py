@@ -18,6 +18,7 @@ class Client:
 	PLAY = 1
 	PAUSE = 2
 	TEARDOWN = 3
+	DESCRIBE = 4
 	
 	# Initiation..
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
@@ -34,9 +35,11 @@ class Client:
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
+		self.totalTime = 0
 		
 	def createWidgets(self):
 		"""Build GUI."""
+		img = ImageTk.PhotoImage(Image.open("img.png"))
 		# Create Setup button
 		self.setup = Button(self.master, width=20, padx=3, pady=3)
 		self.setup["text"] = "Setup"
@@ -60,15 +63,23 @@ class Client:
 		self.teardown["text"] = "Teardown"
 		self.teardown["command"] =  self.exitClient
 		self.teardown.grid(row=1, column=3, padx=2, pady=2)
+
+		# Create Describe button
+		self.describe = Button(self.master, width=20, padx=3, pady=3)
+		self.describe["text"] = "Describe"
+		self.describe["command"] = self.describeStream
+		self.describe.grid(row=1, column=4, padx=2, pady=2)
 		
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5) 
+		self.label.grid(row=0, column=0, columnspan=5, sticky=W+E+N+S, padx=5, pady=5) 
 	
 	def setupMovie(self):
 		"""Setup button handler."""
 		if self.state == self.INIT:
 			self.sendRtspRequest(self.SETUP)
+		if self.state == self.READY:
+			tkMessageBox.showwarning('Connect successfully', 'Total video time \'%s\'' %self.serverAddr)
 	
 	def exitClient(self):
 		"""Teardown button handler."""
@@ -89,6 +100,11 @@ class Client:
 			self.playEvent = threading.Event()
 			self.playEvent.clear()
 			self.sendRtspRequest(self.PLAY)
+	
+	def describeStream(self):
+		"""Describe button handler."""
+		if self.state == self.INIT or self.state == self.PLAYING:
+			self.sendRtspRequest(self.DESCRIBE)
 	
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
