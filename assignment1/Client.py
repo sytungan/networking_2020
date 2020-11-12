@@ -19,6 +19,7 @@ class Client:
 	PAUSE = 2
 	TEARDOWN = 3
 	DESCRIBE = 4
+	STOP = 5
 	
 	# Initiation..
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
@@ -70,6 +71,10 @@ class Client:
 		self.describe["command"] = self.describeStream
 		self.describe.grid(row=1, column=4, padx=2, pady=2)
 		
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Stop"
+		self.pause["command"] = self.stopMovie
+		self.pause.grid(row=1, column=5, padx=2, pady=2)
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
 		self.label.grid(row=0, column=0, columnspan=5, sticky=W+E+N+S, padx=5, pady=5) 
@@ -105,6 +110,11 @@ class Client:
 		"""Describe button handler."""
 		if self.state == self.INIT or self.state == self.PLAYING:
 			self.sendRtspRequest(self.DESCRIBE)
+
+	def stopMovie(self):
+		"""Pause button handler."""
+		if self.state == self.PLAYING or self.state == self.READY:
+			self.sendRtspRequest(self.STOP)
 	
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
@@ -206,6 +216,28 @@ class Client:
 			
 			# Keep track of the sent request.
 			self.requestSent = self.TEARDOWN
+
+		# Describe request
+		elif requestCode == self.DESCRIBE and (self.state == self.PLAYING or self.READY):
+			# Update RTSP sequence number.
+			self.rtspSeq += 1
+			
+			# Write the RTSP request to be sent.
+			request = 'DESCRIBE ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
+			
+			# Keep track of the sent request.
+			self.requestSent = self.DESCRIBE
+
+		# Stop request
+		elif requestCode == self.STOP and (self.state == self.PLAYING or self.READY):
+			# Update RTSP sequence number.
+			self.rtspSeq += 1
+			
+			# Write the RTSP request to be sent.
+			request = 'STOP ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
+			
+			# Keep track of the sent request.
+			self.requestSent = self.STOP
 		else:
 			return
 		
@@ -261,6 +293,17 @@ class Client:
 						
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
+					elif self.requestSent == self.STOP:
+						self.state = self.READY
+						self.playEvent.clear()
+
+					elif self.requestSent == self.DESCRIBE:
+						msg = (lines[3].split(' ')[1]).split(',')
+						txt ='File name: ' + str(msg[0]) + \
+							'\nNumber of frames: ' + str(msg[1]) + \
+							'\nSize of video: ' + str(msg[2]) + ' bytes'
+						self.showDescription(txt)
+
 					elif self.requestSent == self.TEARDOWN:
 						self.state = self.INIT
 						
@@ -277,7 +320,6 @@ class Client:
 		
 		# Set the timeout value of the socket to 0.5sec
 		self.rtpSocket.settimeout(0.5)
-		
 		try:
 			# Bind the socket to the address using the RTP port given by the client user
 			self.rtpSocket.bind(("", self.rtpPort))
@@ -291,3 +333,6 @@ class Client:
 			self.exitClient()
 		else: # When the user presses cancel, resume playing.
 			self.playMovie()
+
+	def showDescription(self, msg):
+		tkMessageBox.showinfo("Description", msg)

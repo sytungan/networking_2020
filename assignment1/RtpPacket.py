@@ -29,7 +29,7 @@ class RtpPacket:
 		self.header[1] = marker << 7
 		self.header[1] = self.header[1] | pt
 
-		self.header[2] = seqnum >> 8
+		self.header[2] = (seqnum >> 8) & 0xFF
 		self.header[3] = seqnum & 0xFF
 
 		self.header[4] = (timestamp >> 24) & 0xFF
