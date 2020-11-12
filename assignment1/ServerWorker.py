@@ -11,6 +11,7 @@ class ServerWorker:
 	TEARDOWN = 'TEARDOWN'
 	DESCRIBE = 'DESCRIBE'
 	STOP = 'STOP'
+	SPEED = 'SPEED'
 	
 	INIT = 0
 	READY = 1
@@ -21,7 +22,7 @@ class ServerWorker:
 	OK_200 = 0
 	FILE_NOT_FOUND_404 = 1
 	CON_ERR_500 = 2
-	
+
 	clientInfo = {}
 	
 	def __init__(self, clientInfo):
@@ -60,6 +61,7 @@ class ServerWorker:
 				
 				try:
 					self.clientInfo['videoStream'] = VideoStream(filename)
+					self.setSpeed(0.05)
 					self.state = self.READY
 				except IOError:
 					self.replyRtsp(self.FILE_NOT_FOUND_404, seq[1])
@@ -122,18 +124,27 @@ class ServerWorker:
 						
 				self.replyRtspMsg(self.OK_200, seq[1], txt)
 
-		# Process PAUSE request
+		# Process STOP request
 		elif requestType == self.STOP:
 			if self.state == self.PLAYING or self.state == self.READY:
 				print("processing STOP\n")
 				self.state = self.READY
-			
+
+				self.replyRtsp(self.OK_200, seq[1])
+
+		# Process STOP request
+		elif requestType == self.SPEED:
+			if self.state == self.PLAYING or self.state == self.READY:
+				print("processing STOP\n")
+				speedSent = eval(request[3].split(' ')[1])
+				print(speedSent)
+				self.setSpeed(speedSent)
 				self.replyRtsp(self.OK_200, seq[1])
 			
 	def sendRtp(self):
 		"""Send RTP packets over UDP."""
 		while True:
-			self.clientInfo['event'].wait(0.05)
+			self.clientInfo['event'].wait(self.speedOfFrameLoad)
 			
 			# Stop sending if request is PAUSE or TEARDOWN
 			if self.clientInfo['event'].isSet():
@@ -196,3 +207,6 @@ class ServerWorker:
 			print("404 NOT FOUND")
 		elif code == self.CON_ERR_500:
 			print("500 CONNECTION ERROR")
+		
+	def setSpeed(self, num):
+		self.speedOfFrameLoad = num

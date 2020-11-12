@@ -20,6 +20,7 @@ class Client:
 	TEARDOWN = 3
 	DESCRIBE = 4
 	STOP = 5
+	SPEED = 6
 	
 	# Initiation..
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
@@ -75,9 +76,15 @@ class Client:
 		self.pause["text"] = "Stop"
 		self.pause["command"] = self.stopMovie
 		self.pause.grid(row=1, column=5, padx=2, pady=2)
+
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Playback Speed"
+		self.pause["command"] = self.popupSpeed
+		self.pause.grid(row=1, column=6, padx=2, pady=2)
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=5, sticky=W+E+N+S, padx=5, pady=5) 
+		self.label.grid(row=0, column=0, columnspan=7, sticky=W+E+N+S, padx=5, pady=5)
+
 	
 	def setupMovie(self):
 		"""Setup button handler."""
@@ -115,6 +122,23 @@ class Client:
 		"""Pause button handler."""
 		if self.state == self.PLAYING or self.state == self.READY:
 			self.sendRtspRequest(self.STOP)
+
+	def playbackSpeed(self, num):
+		if self.state == self.PLAYING or self.state == self.READY:
+			self.speedOfFrameLoad = num
+			self.sendRtspRequest(self.SPEED)
+
+	def popupSpeed(self):
+		win = Toplevel()
+		win.wm_title("Playback speed")
+		win.geometry('200x90') 
+		l = Label(win, text="Input your playback speed:")
+		l.grid(row=0, column=2)
+		valueEntered = Entry(win, width = 15)
+		valueEntered.grid(row = 1, column = 2)
+
+		b = Button(win, text="Okay", command= lambda:[self.playbackSpeed(0.05/eval(valueEntered.get())), win.destroy()])		
+		b.grid(row=3, column=2)
 	
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
@@ -238,6 +262,17 @@ class Client:
 			
 			# Keep track of the sent request.
 			self.requestSent = self.STOP
+
+				# Stop request
+		elif requestCode == self.SPEED and (self.state == self.PLAYING or self.READY):
+			# Update RTSP sequence number.
+			self.rtspSeq += 1
+			
+			# Write the RTSP request to be sent.
+			request = 'SPEED ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId) + '\nSpeed: ' + str(self.speedOfFrameLoad)
+			
+			# Keep track of the sent request.
+			self.requestSent = self.SPEED
 		else:
 			return
 		
