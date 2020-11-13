@@ -1,5 +1,6 @@
 from tkinter import *
 import tkinter.messagebox as tkMessageBox
+from tkinter import ttk
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
 
@@ -46,41 +47,44 @@ class Client:
 		self.setup = Button(self.master, width=20, padx=3, pady=3)
 		self.setup["text"] = "Setup"
 		self.setup["command"] = self.setupMovie
-		self.setup.grid(row=1, column=0, padx=2, pady=2)
+		self.setup.grid(row=2, column=0, padx=2, pady=2)
 		
 		# Create Play button		
 		self.start = Button(self.master, width=20, padx=3, pady=3)
 		self.start["text"] = "Play"
 		self.start["command"] = self.playMovie
-		self.start.grid(row=1, column=1, padx=2, pady=2)
+		self.start.grid(row=2, column=1, padx=2, pady=2)
 		
 		# Create Pause button			
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
 		self.pause["text"] = "Pause"
 		self.pause["command"] = self.pauseMovie
-		self.pause.grid(row=1, column=2, padx=2, pady=2)
+		self.pause.grid(row=2, column=2, padx=2, pady=2)
 		
 		# Create Teardown button
 		self.teardown = Button(self.master, width=20, padx=3, pady=3)
 		self.teardown["text"] = "Teardown"
 		self.teardown["command"] =  self.exitClient
-		self.teardown.grid(row=1, column=3, padx=2, pady=2)
+		self.teardown.grid(row=2, column=3, padx=2, pady=2)
 
 		# Create Describe button
 		self.describe = Button(self.master, width=20, padx=3, pady=3)
 		self.describe["text"] = "Describe"
 		self.describe["command"] = self.describeStream
-		self.describe.grid(row=1, column=4, padx=2, pady=2)
+		self.describe.grid(row=2, column=4, padx=2, pady=2)
 		
+		# Create Stop button
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
 		self.pause["text"] = "Stop"
 		self.pause["command"] = self.stopMovie
-		self.pause.grid(row=1, column=5, padx=2, pady=2)
+		self.pause.grid(row=2, column=5, padx=2, pady=2)
 
+		# Create speed button
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
-		self.pause["text"] = "Playback Speed"
+		self.pause["text"] = "Speed"
 		self.pause["command"] = self.popupSpeed
-		self.pause.grid(row=1, column=6, padx=2, pady=2)
+		self.pause.grid(row=2, column=6, padx=2, pady=2)
+
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
 		self.label.grid(row=0, column=0, columnspan=7, sticky=W+E+N+S, padx=5, pady=5)
@@ -131,14 +135,19 @@ class Client:
 	def popupSpeed(self):
 		win = Toplevel()
 		win.wm_title("Playback speed")
-		win.geometry('200x90') 
-		l = Label(win, text="Input your playback speed:")
-		l.grid(row=0, column=2)
-		valueEntered = Entry(win, width = 15)
-		valueEntered.grid(row = 1, column = 2)
+		win.geometry('220x100') 
+		l = Label(win, text="Choose your playback speed:")
+		l.grid(row=1, column=2)
 
-		b = Button(win, text="Okay", command= lambda:[self.playbackSpeed(0.05/eval(valueEntered.get())), win.destroy()])		
-		b.grid(row=3, column=2)
+		listbox = ttk.Combobox(win) 
+		listbox['value'] = [0.25, 0.5, 0.75, 1, 1.25, 1.75, 2, 3, 4]
+		listbox.grid(row=2, column=2)
+
+		b = Button(win, text="Okay", command= lambda:[self.playbackSpeed(listbox.get()), win.destroy()])		
+		b.grid(row=6, column=2)
+
+	def setSpeedLabel(self, num):
+		self.speedLabel.configure(text = "Playback speed: " + str(num))
 	
 	def listenRtp(self):		
 		"""Listen for RTP packets."""
@@ -313,24 +322,32 @@ class Client:
 			if self.sessionId == session:
 				if int(lines[0].split(' ')[1]) == 200: 
 					if self.requestSent == self.SETUP:
+
+						# Set speed for label
+						self.speedOfFrameLoad = 1
+						self.speedLabel = Label(self.master, text="Playback speed: " + str(self.speedOfFrameLoad))
+						self.speedLabel.grid(row=1, column=6)
 						#-------------
 						# TO COMPLETE
 						#-------------
 						# Update RTSP state.
-						self.state = self.READY
-						
+						self.state = self.READY	
 						# Open RTP port.
 						self.openRtpPort() 
+
 					elif self.requestSent == self.PLAY:
 						self.state = self.PLAYING
+
 					elif self.requestSent == self.PAUSE:
 						self.state = self.READY
-						
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
+
 					elif self.requestSent == self.STOP:
-						self.state = self.READY
 						self.playEvent.clear()
+						self.frameNbr = 0
+						self.updateMovie("image/stopped.png")
+						self.state = self.READY
 
 					elif self.requestSent == self.DESCRIBE:
 						msg = (lines[3].split(' ')[1]).split(',')
@@ -338,6 +355,9 @@ class Client:
 							'\nNumber of frames: ' + str(msg[1]) + \
 							'\nSize of video: ' + str(msg[2]) + ' bytes'
 						self.showDescription(txt)
+
+					elif self.requestSent == self.SPEED:
+						self.setSpeedLabel(self.speedOfFrameLoad)
 
 					elif self.requestSent == self.TEARDOWN:
 						self.state = self.INIT
