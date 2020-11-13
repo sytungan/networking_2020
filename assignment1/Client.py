@@ -13,6 +13,7 @@ class Client:
 	INIT = 0
 	READY = 1
 	PLAYING = 2
+	SWITCHING = 3 
 	state = INIT
 	
 	SETUP = 0
@@ -22,6 +23,9 @@ class Client:
 	DESCRIBE = 4
 	STOP = 5
 	SPEED = 6
+	FORWARD = 7
+	BACKWARD = 8
+	SWITCH = 9
 	
 	# Initiation..
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
@@ -39,15 +43,16 @@ class Client:
 		self.connectToServer()
 		self.frameNbr = 0
 		self.totalTime = 0
+		self.setupMovie()
 		
 	def createWidgets(self):
 		"""Build GUI."""
-		img = ImageTk.PhotoImage(Image.open("img.png"))
+		# img = ImageTk.PhotoImage(Image.open("img.png"))
 		# Create Setup button
-		self.setup = Button(self.master, width=20, padx=3, pady=3)
-		self.setup["text"] = "Setup"
-		self.setup["command"] = self.setupMovie
-		self.setup.grid(row=2, column=0, padx=2, pady=2)
+		# self.setup = Button(self.master, width=20, padx=3, pady=3)
+		# self.setup["text"] = "Setup"
+		# self.setup["command"] = self.setupMovie
+		# self.setup.grid(row=2, column=0, padx=2, pady=2)
 		
 		# Create Play button		
 		self.start = Button(self.master, width=20, padx=3, pady=3)
@@ -62,16 +67,16 @@ class Client:
 		self.pause.grid(row=2, column=2, padx=2, pady=2)
 		
 		# Create Teardown button
-		self.teardown = Button(self.master, width=20, padx=3, pady=3)
-		self.teardown["text"] = "Teardown"
-		self.teardown["command"] =  self.exitClient
-		self.teardown.grid(row=2, column=3, padx=2, pady=2)
+		# self.teardown = Button(self.master, width=20, padx=3, pady=3)
+		# self.teardown["text"] = "Teardown"
+		# self.teardown["command"] =  self.exitClient
+		# self.teardown.grid(row=2, column=3, padx=2, pady=2)
 
 		# Create Describe button
 		self.describe = Button(self.master, width=20, padx=3, pady=3)
 		self.describe["text"] = "Describe"
 		self.describe["command"] = self.describeStream
-		self.describe.grid(row=2, column=4, padx=2, pady=2)
+		self.describe.grid(row=2, column=6, padx=2, pady=2)
 		
 		# Create Stop button
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
@@ -83,11 +88,23 @@ class Client:
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
 		self.pause["text"] = "Speed"
 		self.pause["command"] = self.popupSpeed
-		self.pause.grid(row=2, column=6, padx=2, pady=2)
+		self.pause.grid(row=2, column=7, padx=2, pady=2)
+
+		# Create forward button
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Forward"
+		self.pause["command"] = self.forwardMovie
+		self.pause.grid(row=2, column=3, padx=2, pady=2)
+
+		# Create backward button
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Backward"
+		self.pause["command"] = self.backwardMovie
+		self.pause.grid(row=2, column=4, padx=2, pady=2)
 
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=7, sticky=W+E+N+S, padx=5, pady=5)
+		self.label.grid(row=0, column=0, columnspan=9, sticky=W+E+N+S, padx=5, pady=5)
 
 	
 	def setupMovie(self):
@@ -119,7 +136,7 @@ class Client:
 	
 	def describeStream(self):
 		"""Describe button handler."""
-		if self.state == self.INIT or self.state == self.PLAYING:
+		if self.state == self.PLAYING or self.state == self.READY:
 			self.sendRtspRequest(self.DESCRIBE)
 
 	def stopMovie(self):
@@ -132,6 +149,17 @@ class Client:
 			self.speedOfFrameLoad = num
 			self.sendRtspRequest(self.SPEED)
 
+	def forwardMovie(self):
+		if self.state == self.PLAYING:
+			self.sendRtspRequest(self.FORWARD)
+
+	def backwardMovie(self):
+		if self.state == self.PLAYING:
+			self.sendRtspRequest(self.BACKWARD)
+	
+	def switchMovie(self):
+		self.sendRtspRequest(self.SWITCH)
+
 	def popupSpeed(self):
 		win = Toplevel()
 		win.wm_title("Playback speed")
@@ -143,7 +171,7 @@ class Client:
 		listbox['value'] = [0.25, 0.5, 0.75, 1, 1.25, 1.75, 2, 3, 4]
 		listbox.grid(row=2, column=2)
 
-		b = Button(win, text="Okay", command= lambda:[self.playbackSpeed(listbox.get()), win.destroy()])		
+		b = Button(win, text="Ok", command= lambda:[self.playbackSpeed(listbox.get()), win.destroy()])		
 		b.grid(row=6, column=2)
 
 	def setSpeedLabel(self, num):
@@ -272,7 +300,7 @@ class Client:
 			# Keep track of the sent request.
 			self.requestSent = self.STOP
 
-				# Stop request
+		# Speed request
 		elif requestCode == self.SPEED and (self.state == self.PLAYING or self.READY):
 			# Update RTSP sequence number.
 			self.rtspSeq += 1
@@ -282,6 +310,28 @@ class Client:
 			
 			# Keep track of the sent request.
 			self.requestSent = self.SPEED
+
+		# Forward request
+		elif requestCode == self.FORWARD and self.state == self.PLAYING:
+			# Update RTSP sequence number.
+			self.rtspSeq += 1
+			
+			# Write the RTSP request to be sent.
+			request = 'FORWARD ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
+			
+			# Keep track of the sent request.
+			self.requestSent = self.FORWARD
+
+		# Backward request
+		elif requestCode == self.BACKWARD and self.state == self.PLAYING:
+			# Update RTSP sequence number.
+			self.rtspSeq += 1
+			
+			# Write the RTSP request to be sent.
+			request = 'BACKWARD ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
+			
+			# Keep track of the sent request.
+			self.requestSent = self.BACKWARD
 		else:
 			return
 		
@@ -326,7 +376,7 @@ class Client:
 						# Set speed for label
 						self.speedOfFrameLoad = 1
 						self.speedLabel = Label(self.master, text="Playback speed: " + str(self.speedOfFrameLoad))
-						self.speedLabel.grid(row=1, column=6)
+						self.speedLabel.grid(row=1, column=7)
 						#-------------
 						# TO COMPLETE
 						#-------------
@@ -358,6 +408,15 @@ class Client:
 
 					elif self.requestSent == self.SPEED:
 						self.setSpeedLabel(self.speedOfFrameLoad)
+					
+					elif self.requestSent == self.FORWARD:
+						self.frameNbr = 0
+
+					elif self.requestSent == self.BACKWARD:
+						self.frameNbr = 0
+					
+					elif self.requestSent == self.SWITCH:
+						msg = (lines[3].split(' ')[1]).split(',')
 
 					elif self.requestSent == self.TEARDOWN:
 						self.state = self.INIT

@@ -1,5 +1,6 @@
 from random import randint
 import sys, traceback, threading, socket
+from glob import glob
 
 from VideoStream import VideoStream
 from RtpPacket import RtpPacket
@@ -12,6 +13,9 @@ class ServerWorker:
 	DESCRIBE = 'DESCRIBE'
 	STOP = 'STOP'
 	SPEED = 'SPEED'
+	FORWARD = 'FORWARD'
+	BACKWARD = 'BACKWARD'
+	SWITCH = 'SWITCH'
 	
 	INIT = 0
 	READY = 1
@@ -133,13 +137,40 @@ class ServerWorker:
 				self.state = self.READY
 				self.replyRtsp(self.OK_200, seq[1])
 
-		# Process STOP request
+		# Process SPEED request
 		elif requestType == self.SPEED:
 			if self.state == self.PLAYING or self.state == self.READY:
-				print("processing STOP\n")
+				print("processing SPEED\n")
 				speedSent = eval(request[3].split(' ')[1])
 				self.setSpeed(speedSent)
 				self.replyRtsp(self.OK_200, seq[1])
+
+		# Process FORWARD request
+		elif requestType == self.FORWARD:
+			print("processing FORWARD\n")
+			#self.clientInfo['event'].set()
+			currentFrame = self.clientInfo['videoStream'].frameNbr()
+			limit = self.clientInfo['videoStream'].getNumberOfFrame()
+			self.clientInfo['videoStream'].goToFrame((currentFrame + 20) if (currentFrame + 20) < limit else currentFrame)
+			self.replyRtsp(self.OK_200, seq[1])
+
+		# Process BACKWARD request
+		elif requestType == self.BACKWARD:
+			print("processing BACKWARD\n")
+			#self.clientInfo['event'].set()
+			currentFrame = self.clientInfo['videoStream'].frameNbr()
+			limit = 0
+			self.clientInfo['videoStream'].goToFrame((currentFrame - 20) if (currentFrame - 20) > limit else currentFrame )
+			self.replyRtsp(self.OK_200, seq[1])
+
+		# Process BACKWARD request
+		elif requestType == self.BACKWARD:
+			print("processing BACKWARD\n")
+			#self.clientInfo['event'].set()
+			currentFrame = self.clientInfo['videoStream'].frameNbr()
+			limit = 0
+			self.clientInfo['videoStream'].goToFrame((currentFrame - 20) if (currentFrame - 20) > limit else currentFrame )
+			self.replyRtsp(self.OK_200, seq[1])
 			
 	def sendRtp(self):
 		"""Send RTP packets over UDP."""

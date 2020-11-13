@@ -1,2 +1,2 @@
-import moviepy.editor as mp
-duration =  mp.VideoFileClip("movie.Mjpeg").duration
+from glob import glob
+print(glob('*.Mjpeg'))
