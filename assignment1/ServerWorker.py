@@ -16,10 +16,12 @@ class ServerWorker:
 	FORWARD = 'FORWARD'
 	BACKWARD = 'BACKWARD'
 	SWITCH = 'SWITCH'
+	SELECT = 'SELECT'
 	
 	INIT = 0
 	READY = 1
 	PLAYING = 2
+	SWITCHING = 3 
 	state = INIT
 
 
@@ -147,29 +149,41 @@ class ServerWorker:
 
 		# Process FORWARD request
 		elif requestType == self.FORWARD:
-			print("processing FORWARD\n")
-			#self.clientInfo['event'].set()
-			currentFrame = self.clientInfo['videoStream'].frameNbr()
-			limit = self.clientInfo['videoStream'].getNumberOfFrame()
-			self.clientInfo['videoStream'].goToFrame((currentFrame + 20) if (currentFrame + 20) < limit else currentFrame)
-			self.replyRtsp(self.OK_200, seq[1])
+			if self.state == self.PLAYING:
+				print("processing FORWARD\n")
+				#self.clientInfo['event'].set()
+				currentFrame = self.clientInfo['videoStream'].frameNbr()
+				limit = self.clientInfo['videoStream'].getNumberOfFrame()
+				self.clientInfo['videoStream'].goToFrame((currentFrame + 20) if (currentFrame + 20) < limit else currentFrame)
+				self.replyRtsp(self.OK_200, seq[1])
 
-		# Process BACKWARD request
+		# Process SWITCH request
 		elif requestType == self.BACKWARD:
-			print("processing BACKWARD\n")
-			#self.clientInfo['event'].set()
-			currentFrame = self.clientInfo['videoStream'].frameNbr()
-			limit = 0
-			self.clientInfo['videoStream'].goToFrame((currentFrame - 20) if (currentFrame - 20) > limit else currentFrame )
-			self.replyRtsp(self.OK_200, seq[1])
+			if self.state == self.PLAYING:
+				print("processing BACKWARD\n")
+				#self.clientInfo['event'].set()
+				currentFrame = self.clientInfo['videoStream'].frameNbr()
+				limit = 0
+				self.clientInfo['videoStream'].goToFrame((currentFrame - 20) if (currentFrame - 20) > limit else currentFrame )
+				self.replyRtsp(self.OK_200, seq[1])
 
-		# Process BACKWARD request
-		elif requestType == self.BACKWARD:
-			print("processing BACKWARD\n")
-			#self.clientInfo['event'].set()
-			currentFrame = self.clientInfo['videoStream'].frameNbr()
-			limit = 0
-			self.clientInfo['videoStream'].goToFrame((currentFrame - 20) if (currentFrame - 20) > limit else currentFrame )
+		# Process SWITCH request
+		elif requestType == self.SWITCH:
+			print("processing SWITCH\n")
+			if self.state == self.PLAYING:
+				self.clientInfo['event'].set()
+			lstFile = glob('*.Mjpeg')
+			msg = str(lstFile[0])
+			for x in lstFile[1:]:
+				msg += ',' + x
+			self.replyRtspMsg(self.OK_200, seq[1], msg)
+
+		# Process SELECT request
+		elif requestType == self.SELECT:
+			print("processing SELECT\n")
+			self.clientInfo['videoStream'] = VideoStream(filename)
+			self.setSpeed(1)
+			self.state = self.READY
 			self.replyRtsp(self.OK_200, seq[1])
 			
 	def sendRtp(self):

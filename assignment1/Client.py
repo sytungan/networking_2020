@@ -26,6 +26,7 @@ class Client:
 	FORWARD = 7
 	BACKWARD = 8
 	SWITCH = 9
+	SELECT = 10
 	
 	# Initiation..
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
@@ -84,11 +85,17 @@ class Client:
 		self.pause["command"] = self.stopMovie
 		self.pause.grid(row=2, column=5, padx=2, pady=2)
 
-		# Create speed button
+		# Create Speed button
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
 		self.pause["text"] = "Speed"
 		self.pause["command"] = self.popupSpeed
 		self.pause.grid(row=2, column=7, padx=2, pady=2)
+
+		# Create Switch button
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Switch"
+		self.pause["command"] = self.switchMovie
+		self.pause.grid(row=2, column=8, padx=2, pady=2)
 
 		# Create forward button
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
@@ -159,6 +166,25 @@ class Client:
 	
 	def switchMovie(self):
 		self.sendRtspRequest(self.SWITCH)
+
+	def selectMovie(self, filename_):
+		if self.state == self.SWITCHING:
+			self.fileName = filename_
+			self.sendRtspRequest(self.SELECT)
+
+	def popupSwitch(self, lst):
+		win = Toplevel()
+		win.wm_title("Switch video")
+		win.geometry('220x100') 
+		l = Label(win, text="Choose video:")
+		l.grid(row=1, column=2)
+
+		listbox = ttk.Combobox(win) 
+		listbox['value'] = lst
+		listbox.grid(row=2, column=2)
+
+		b = Button(win, text="Ok", command= lambda:[self.selectMovie(listbox.get()), win.destroy()])		
+		b.grid(row=6, column=2)
 
 	def popupSpeed(self):
 		win = Toplevel()
@@ -332,6 +358,28 @@ class Client:
 			
 			# Keep track of the sent request.
 			self.requestSent = self.BACKWARD
+
+				# Backward request
+		elif requestCode == self.SWITCH:
+			# Update RTSP sequence number.
+			self.rtspSeq += 1
+			
+			# Write the RTSP request to be sent.
+			request = 'SWITCH ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
+			
+			# Keep track of the sent request.
+			self.requestSent = self.SWITCH
+
+						# Backward request
+		elif requestCode == self.SELECT:
+			# Update RTSP sequence number.
+			self.rtspSeq += 1
+			
+			# Write the RTSP request to be sent.
+			request = 'SELECT ' + self.fileName + ' RTSP/1.0\nCSeq: ' + str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
+			
+			# Keep track of the sent request.
+			self.requestSent = self.SELECT
 		else:
 			return
 		
@@ -416,7 +464,18 @@ class Client:
 						self.frameNbr = 0
 					
 					elif self.requestSent == self.SWITCH:
+						self.state = self.SWITCHING
 						msg = (lines[3].split(' ')[1]).split(',')
+						self.popupSwitch(msg)
+					
+					elif self.requestSent == self.SELECT:
+						# if self.playEvent:
+						# 	self.playEvent.clear()
+						self.speedOfFrameLoad = 1
+						self.speedLabel = Label(self.master, text="Playback speed: " + str(self.speedOfFrameLoad))
+						self.speedLabel.grid(row=1, column=7)
+						self.frameNbr = 0
+						self.state = self.READY
 
 					elif self.requestSent == self.TEARDOWN:
 						self.state = self.INIT
