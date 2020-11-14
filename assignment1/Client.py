@@ -66,36 +66,6 @@ class Client:
 		self.pause["text"] = "Pause"
 		self.pause["command"] = self.pauseMovie
 		self.pause.grid(row=2, column=2, padx=2, pady=2)
-		
-		# Create Teardown button
-		# self.teardown = Button(self.master, width=20, padx=3, pady=3)
-		# self.teardown["text"] = "Teardown"
-		# self.teardown["command"] =  self.exitClient
-		# self.teardown.grid(row=2, column=3, padx=2, pady=2)
-
-		# Create Describe button
-		self.describe = Button(self.master, width=20, padx=3, pady=3)
-		self.describe["text"] = "Describe"
-		self.describe["command"] = self.describeStream
-		self.describe.grid(row=2, column=6, padx=2, pady=2)
-		
-		# Create Stop button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
-		self.pause["text"] = "Stop"
-		self.pause["command"] = self.stopMovie
-		self.pause.grid(row=2, column=5, padx=2, pady=2)
-
-		# Create Speed button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
-		self.pause["text"] = "Speed"
-		self.pause["command"] = self.popupSpeed
-		self.pause.grid(row=2, column=7, padx=2, pady=2)
-
-		# Create Switch button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
-		self.pause["text"] = "Switch"
-		self.pause["command"] = self.switchMovie
-		self.pause.grid(row=2, column=8, padx=2, pady=2)
 
 		# Create forward button
 		self.pause = Button(self.master, width=20, padx=3, pady=3)
@@ -108,6 +78,36 @@ class Client:
 		self.pause["text"] = "Backward"
 		self.pause["command"] = self.backwardMovie
 		self.pause.grid(row=2, column=4, padx=2, pady=2)
+		
+		# Create Teardown button
+		# self.teardown = Button(self.master, width=20, padx=3, pady=3)
+		# self.teardown["text"] = "Teardown"
+		# self.teardown["command"] =  self.exitClient
+		# self.teardown.grid(row=2, column=3, padx=2, pady=2)
+
+		# Create Stop button
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Stop"
+		self.pause["command"] = self.stopMovie
+		self.pause.grid(row=2, column=5, padx=2, pady=2)
+
+		# Create Describe button
+		self.describe = Button(self.master, width=20, padx=3, pady=3)
+		self.describe["text"] = "Describe"
+		self.describe["command"] = self.describeStream
+		self.describe.grid(row=2, column=6, padx=2, pady=2)
+
+		# Create Speed button
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Speed"
+		self.pause["command"] = self.popupSpeed
+		self.pause.grid(row=2, column=8, padx=2, pady=2)
+
+		# Create Switch button
+		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause["text"] = "Switch"
+		self.pause["command"] = self.switchMovie
+		self.pause.grid(row=2, column=7, padx=2, pady=2)
 
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
@@ -174,6 +174,7 @@ class Client:
 
 	def popupSwitch(self, lst):
 		win = Toplevel()
+		win.protocol("WM_DELETE_WINDOW", self.disable_event)
 		win.wm_title("Switch video")
 		win.geometry('220x100') 
 		l = Label(win, text="Choose video:")
@@ -185,6 +186,8 @@ class Client:
 
 		b = Button(win, text="Ok", command= lambda:[self.selectMovie(listbox.get()), win.destroy()])		
 		b.grid(row=6, column=2)
+
+	def disable_event(self): pass
 
 	def popupSpeed(self):
 		win = Toplevel()
@@ -424,7 +427,7 @@ class Client:
 						# Set speed for label
 						self.speedOfFrameLoad = 1
 						self.speedLabel = Label(self.master, text="Playback speed: " + str(self.speedOfFrameLoad))
-						self.speedLabel.grid(row=1, column=7)
+						self.speedLabel.grid(row=1, column=8)
 						#-------------
 						# TO COMPLETE
 						#-------------
@@ -472,9 +475,9 @@ class Client:
 						# if self.playEvent:
 						# 	self.playEvent.clear()
 						self.speedOfFrameLoad = 1
-						self.speedLabel = Label(self.master, text="Playback speed: " + str(self.speedOfFrameLoad))
-						self.speedLabel.grid(row=1, column=7)
 						self.frameNbr = 0
+						self.updateMovie("image/none.png")
+						self.setSpeedLabel(1)
 						self.state = self.READY
 
 					elif self.requestSent == self.TEARDOWN:
