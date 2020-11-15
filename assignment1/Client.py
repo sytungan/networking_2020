@@ -56,25 +56,25 @@ class Client:
 		# self.setup.grid(row=2, column=0, padx=2, pady=2)
 		
 		# Create Play button		
-		self.start = Button(self.master, width=20, padx=3, pady=3)
+		self.start = Button(self.master, width=10, padx=3, pady=3)
 		self.start["text"] = "Play"
 		self.start["command"] = self.playMovie
 		self.start.grid(row=2, column=1, padx=2, pady=2)
 		
 		# Create Pause button			
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause = Button(self.master, width=10, padx=3, pady=3)
 		self.pause["text"] = "Pause"
 		self.pause["command"] = self.pauseMovie
 		self.pause.grid(row=2, column=2, padx=2, pady=2)
 
 		# Create forward button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause = Button(self.master, width=10, padx=3, pady=3)
 		self.pause["text"] = "Forward"
 		self.pause["command"] = self.forwardMovie
 		self.pause.grid(row=2, column=3, padx=2, pady=2)
 
 		# Create backward button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause = Button(self.master, width=10, padx=3, pady=3)
 		self.pause["text"] = "Backward"
 		self.pause["command"] = self.backwardMovie
 		self.pause.grid(row=2, column=4, padx=2, pady=2)
@@ -86,32 +86,32 @@ class Client:
 		# self.teardown.grid(row=2, column=3, padx=2, pady=2)
 
 		# Create Stop button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause = Button(self.master, width=10, padx=3, pady=3)
 		self.pause["text"] = "Stop"
 		self.pause["command"] = self.stopMovie
 		self.pause.grid(row=2, column=5, padx=2, pady=2)
 
 		# Create Describe button
-		self.describe = Button(self.master, width=20, padx=3, pady=3)
+		self.describe = Button(self.master, width=10, padx=3, pady=3)
 		self.describe["text"] = "Describe"
 		self.describe["command"] = self.describeStream
 		self.describe.grid(row=2, column=6, padx=2, pady=2)
 
 		# Create Speed button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause = Button(self.master, width=10, padx=3, pady=3)
 		self.pause["text"] = "Speed"
 		self.pause["command"] = self.popupSpeed
 		self.pause.grid(row=2, column=8, padx=2, pady=2)
 
 		# Create Switch button
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
+		self.pause = Button(self.master, width=10, padx=3, pady=3)
 		self.pause["text"] = "Switch"
 		self.pause["command"] = self.switchMovie
 		self.pause.grid(row=2, column=7, padx=2, pady=2)
 
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=9, sticky=W+E+N+S, padx=5, pady=5)
+		self.label.grid(row=0, column=0, columnspan=9, sticky=W+E+N+S, padx=10, pady=10)
 
 	
 	def setupMovie(self):
