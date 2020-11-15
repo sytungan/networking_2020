@@ -147,7 +147,7 @@ class Client:
 			self.sendRtspRequest(self.DESCRIBE)
 
 	def stopMovie(self):
-		"""Pause button handler."""
+		"""Stop button handler."""
 		if self.state == self.PLAYING or self.state == self.READY:
 			self.sendRtspRequest(self.STOP)
 
@@ -157,14 +157,17 @@ class Client:
 			self.sendRtspRequest(self.SPEED)
 
 	def forwardMovie(self):
+		"""Forward button handler."""
 		if self.state == self.PLAYING:
 			self.sendRtspRequest(self.FORWARD)
 
 	def backwardMovie(self):
+		"""Backward button handler."""
 		if self.state == self.PLAYING:
 			self.sendRtspRequest(self.BACKWARD)
 	
 	def switchMovie(self):
+		"""Switch button handler."""
 		self.sendRtspRequest(self.SWITCH)
 
 	def selectMovie(self, filename_):
@@ -362,7 +365,7 @@ class Client:
 			# Keep track of the sent request.
 			self.requestSent = self.BACKWARD
 
-				# Backward request
+		# Switch request
 		elif requestCode == self.SWITCH:
 			# Update RTSP sequence number.
 			self.rtspSeq += 1
@@ -373,7 +376,7 @@ class Client:
 			# Keep track of the sent request.
 			self.requestSent = self.SWITCH
 
-						# Backward request
+		# Select request
 		elif requestCode == self.SELECT:
 			# Update RTSP sequence number.
 			self.rtspSeq += 1
